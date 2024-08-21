@@ -1,0 +1,231 @@
+---
+title: "data_viz_practice"
+format: html
+---
+```{r}
+library(tidyverse)
+library(here)
+library(janitor)
+
+install.packages("patchwork")
+install.packages("ggrepel")
+install.packages("gghighlight")
+install.packages("paletteer")
+install.packages("ggExtra")
+install.packages("ggbeeswarm")
+```
+```{r}
+library(tidyverse)
+library(here)
+library(janitor)
+library(patchwork)
+library(ggrepel)
+library(gghighlight)
+library(ggExtra)
+library(ggbeeswarm)
+
+```
+
+
+```{r}
+lizards <- read_csv(here("data_tidy", "lizards.csv"))
+```
+```{r}
+
+ggplot(data = lizards, aes(x = total_length, y = weight)) +
+  geom_point()
+
+# and we can layer on other plots (see below)
+ggplot(data = lizards, aes(x = total_length, y = weight)) +
+  geom_point() +
+  geom_line()
+
+# another way to make the same graph is to put the "aes" in the geometry line (geom_point)
+
+ggplot(data = lizards) +
+  geom_point(aes(x = total_length, y = weight))
+
+# or like this
+
+ggplot() +
+  geom_point(data = lizards, aes(x = total_length, y = weight))
+
+
+
+```
+
+```{r}
+
+# for histograms only an X axis is necessaary
+ggplot(data = lizards, aes(x = total_length)) + 
+  geom_histogram()
+```
+
+```{r}
+ggplot(data= lizards, aes(y = common_name, weight)) +
+  geom_point()
+
+ggplot(data= lizards, aes(y = common_name, weight)) +
+  geom_point()
+
+```
+
+```{r}
+ggplot(data = lizards, aes(x = weight)) +
+  geom_histogram(color = "orange", 
+                 fill = "purple", 
+                 size = 2, 
+                 linetype = "dotted")
+```
+
+```{r}
+ggplot(data = lizards, aes(x = total_length, y = weight)) +
+  geom_point(color = "#DDC3D0",
+             fill = "#3E92CC",
+             shape = 22, 
+             size = 3, 
+             alpha = 0.2)
+
+# alpha is for adjusting for how seethrough the points/fills of the graph are. 1 being the least seethrough 
+```
+
+
+
+```{r}
+# updating an aesthetic based on a variable aes()
+
+ggplot(data = lizards, aes(x = total_length, y = weight))+ 
+  geom_point(aes(color = common_name, 
+                 size = total_length), 
+             alpha = 0.5)
+
+# when we want to make changes BASED on a variable, we make the change WITHIN aes(), but if we want it to apply to all lines/points/ etc then we put the alpha OUTSIDE of the aes() ^^
+
+ggplot(data = lizards, aes(x = total_length, y = weight))+ 
+  geom_point(aes(color = common_name, 
+                 size = total_length,
+                   alpha = 1)) +
+  scale_color_discrete(type = c("#AA4465", "#EDF0DA", "#EDF0DA", "#EDF0DA", "#EDF0DA","#EDF0DA","#EDF0DA" ))
+
+ # scale_color  allows us to set a diff color per value being graphed                                                                                                 
+```
+
+```{r}
+
+ggplot( data = lizards, aes( x = site, y = weight)) + 
+  geom_jitter(aes(color = common_name)) +
+  theme_minimal()
+
+ggplot( data = lizards, aes( x = site, y = weight)) + 
+  geom_jitter(aes(color = common_name)) +
+  theme_light()  
+
+
+
+# theme allows us to change the background. theme_minimal makes the background white with grey grid lines.we can customize and create our own themes to use in the future 
+
+```
+```{r}
+ggplot(data = lizards, aes(x = total_length, y = weight)) +
+  geom_point() +
+  labs( x = "Total length (mm)", 
+        y = "Weight (grams)", 
+        title = "Lizard size")
+
+
+
+```
+
+# If what we are manipulating has to do with the data, it must happen in the aes() or in the geom function. otherwise, it happens outside of these , in theme()
+
+
+# Faceting
+```{r}
+# there are two ways to facet -> wrap and grid
+
+# in this example there are 7 species  
+ggplot(data = lizards, aes(x = total_length, y = weight)) + 
+  geom_point() +
+  facet_wrap(~common_name, ncol = 3, scales = "free" ) +
+  labs (x = "Total length (mm)",
+        y = "Weight (grams)")
+# ncol decides how many columns the facets are arranged into 
+# labs is changing the name of the axis 
+# scales_free gives ecah facet its y and x scales
+
+
+ggplot(data = lizards, aes(x = total_length, y = weight)) + 
+  geom_point() +
+  facet_wrap(~common_name, ncol = 3 ) +
+  labs (x = "Total length (mm)",
+        y = "Weight (grams)")
+
+# this ^ does not display an indiv. x and y scale per facet
+```
+```{r}
+
+ggplot(data = lizards, aes(x = total_length, y = weight)) + 
+  geom_point() +
+  facet_wrap(sex ~ tail)
+
+# in ^ facet_wrap(sex ~ tail) means sex is the x axis and tail is the y axis. the "~" is the syntax for telling operation how to facet
+
+```
+
+
+```{r}
+
+lizards_counts <- lizards %>%
+  count(common_name)
+
+# if we wanted to rename the new "n" column that has the counts, we can %>% rename(n_counts = n)
+
+ggplot(data = lizards_counts, aes(y = common_name, x = n)) +
+  geom_col()
+
+# if we want to re order the common names to follow the original order of lizard common_names, we do:
+
+ggplot(data = lizards_counts, aes(y = fct_reorder(common_name, n), x = n)) +
+  geom_col()
+
+```
+
+
+```{r}
+
+# size" changes the size of the points to 2 
+
+ggplot(data = lizards, aes( x = total_length, y = weight)) +
+  geom_point(aes(color = common_name, shape = common_name), 
+             size = 2) + 
+  theme_minimal() +
+  labs(x = "Total length (mm)", 
+       y = "Weight (g)", 
+       color = "Lizard Species") +
+  facet_wrap(~ common_name, scales = "free")
+
+
+```
+
+```{r}
+
+ggplot(data = lizards, aes( y = fct_infreq(common_name))) +
+  geom_bar(aes(fill = site)) +
+  theme_minimal() +
+  labs( x = "Lizard counts",
+        y = "Species (common name)")+
+  facet_grid(sex ~ tail) + 
+  theme()
+
+
+
+# geom_bar and geom_col both create a bar graph but geom_bar will count the values and order them by frequency, in geom_col we would have to manually get the count first. 
+
+
+
+
+
+
+
+```
+
